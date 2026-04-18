@@ -140,7 +140,7 @@ function App() {
                 showFlash(error.message, "error");
             }
         })();
-    }, [user]);
+    }, [user, token]);
 
     const filteredProducts = useMemo(() => products.filter((product) => {
         const byCategory = !categoryId || String(product.category?.id || "") === String(categoryId);
@@ -367,7 +367,7 @@ function App() {
                                 <strong>{currency(cartTotal)}</strong>
                                 {promotion && <p className="muted">Savings preview: -{currency(promoDiscount)} ({promotion.label})</p>}
                                 {promotion && <p className="label">Estimated total preview: {currency(payableTotal)}</p>}
-                                {promotion && <p className="muted">Note: coupon preview is UI-only until backend coupon support is added.</p>}
+                                {promotion && <p className="muted">Note: promotion preview is UI-only until backend promotion support is added.</p>}
                             </div>
                             <button className="button button--accent" onClick={() => callWithFlash(api("/api/orders/place", { method: "POST" }).then(refreshPrivateData).then(() => setPromoCode("")), "Order placed successfully.")}>Place order</button>
                         </div>
@@ -380,7 +380,7 @@ function App() {
                                 value={promoCode}
                                 onChange={(e) => setPromoCode(e.target.value)}
                             />
-                            <p id="coupon-help" className="muted">Enter a valid coupon code if available for your account.</p>
+                            <p id="coupon-help" className="muted">Enter a promotion code to preview potential savings.</p>
                         </div>
                     </div>
 
