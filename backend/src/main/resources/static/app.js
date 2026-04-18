@@ -140,7 +140,7 @@ function App() {
                 showFlash(error.message, "error");
             }
         })();
-    }, [user, token]);
+    }, [user]);
 
     const filteredProducts = useMemo(() => products.filter((product) => {
         const byCategory = !categoryId || String(product.category?.id || "") === String(categoryId);
@@ -297,6 +297,7 @@ function App() {
                                         className="qty-input"
                                         type="number"
                                         min="1"
+                                        max={Math.max(1, Number(product.stockQuantity || 1))}
                                         aria-label={`Quantity for ${product.name}`}
                                         value={qtyByProduct[product.id] || 1}
                                         onChange={(e) => setQtyByProduct((prev) => ({ ...prev, [product.id]: Math.max(1, Number(e.target.value) || 1) }))}
@@ -328,6 +329,7 @@ function App() {
                                             <input
                                                 className="qty-input"
                                                 min="1"
+                                                max={Math.max(1, Number(item.product?.stockQuantity || 1))}
                                                 type="number"
                                                 aria-label={`Cart quantity for ${item.product?.name || "item"}`}
                                                 value={cartQty[item.id] || item.quantity}
@@ -378,7 +380,7 @@ function App() {
                                 value={promoCode}
                                 onChange={(e) => setPromoCode(e.target.value)}
                             />
-                            <p id="coupon-help" className="muted">Available coupons: PIZZA10, DRINK5, BREAD7, FESTIVE15</p>
+                            <p id="coupon-help" className="muted">Enter a valid coupon code if available for your account.</p>
                         </div>
                     </div>
 
