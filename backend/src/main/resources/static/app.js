@@ -140,7 +140,7 @@ function App() {
                 showFlash(error.message, "error");
             }
         })();
-    }, []);
+    }, [user]);
 
     const filteredProducts = useMemo(() => products.filter((product) => {
         const byCategory = !categoryId || String(product.category?.id || "") === String(categoryId);
@@ -177,9 +177,16 @@ function App() {
     async function quickReorder(order) {
         if (!user) return showFlash("Login required.", "error");
         try {
-            for (const item of (order.items || [])) {
-                await api("/api/cart/add", { method: "POST", body: JSON.stringify({ productId: Number(item.product?.id), quantity: Number(item.quantity || 1) }) });
-            }
+            const requests = (order.items || [])
+                .filter((item) => item.product?.id)
+                .map((item) => api("/api/cart/add", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        productId: Number(item.product.id),
+                        quantity: Number(item.quantity || 1)
+                    })
+                }));
+            await Promise.all(requests);
             await loadCart();
             showFlash(`Order #${order.id} added to cart.`);
         } catch (error) {
@@ -286,7 +293,14 @@ function App() {
                                 <div><div className="product-meta"><span>{product.category?.name || "Uncategorized"}</span><span>{product.stockQuantity || 0} in stock</span></div><h3>{product.name}</h3><p className="muted">{product.description || "No description available."}</p></div>
                                 <div className="list-item__row"><strong>{currency(product.price)}</strong><span className="status-badge">{parseMenuGroup(product)}</span></div>
                                 <div className="product-actions">
-                                    <input className="qty-input" type="number" min="1" value={qtyByProduct[product.id] || 1} onChange={(e) => setQtyByProduct((prev) => ({ ...prev, [product.id]: e.target.value }))} />
+                                    <input
+                                        className="qty-input"
+                                        type="number"
+                                        min="1"
+                                        aria-label={`Quantity for ${product.name}`}
+                                        value={qtyByProduct[product.id] || 1}
+                                        onChange={(e) => setQtyByProduct((prev) => ({ ...prev, [product.id]: Math.max(1, Number(e.target.value) || 1) }))}
+                                    />
                                     <button className="button" disabled={!user} onClick={() => addToCart(product.id)}>Add to cart</button>
                                 </div>
                             </article>
@@ -299,12 +313,65 @@ function App() {
                         <div className="panel__heading"><div><p className="eyebrow">Cart</p><h2>Your basket</h2></div><button className="button button--ghost" onClick={() => callWithFlash(api("/api/cart/clear", { method: "DELETE" }).then(() => { setCart({ items: [], totalAmount: 0 }); setCartQty({}); }), "Cart cleared.")}>Clear cart</button></div>
                         {!user && <div className="stack-list empty-state">Login to manage cart.</div>}
                         {user && !((cart?.items || []).length > 0) && <div className="stack-list empty-state">Your cart is empty.</div>}
-                        {user && (cart?.items || []).length > 0 && <div className="stack-list">{cart.items.map((item) => <article key={item.id} className="list-item"><div className="list-item__row"><div><strong>{item.product?.name}</strong><p className="muted">{currency(item.product?.price)} each</p></div><strong>{currency(item.subtotal)}</strong></div><div className="product-actions"><input className="qty-input" min="1" type="number" value={cartQty[item.id] || item.quantity} onChange={(e) => setCartQty((prev) => ({ ...prev, [item.id]: e.target.value }))} /><button className="button button--ghost" onClick={() => callWithFlash(api(`/api/cart/update/${item.id}`, { method: "PUT", body: JSON.stringify({ productId: Number(item.product?.id), quantity: Number(cartQty[item.id] || 1) }) }).then(setCart), "Cart updated.")}>Update</button><button className="button button--ghost" onClick={() => callWithFlash(api(`/api/cart/remove/${item.id}`, { method: "DELETE" }).then(setCart), "Item removed.")}>Remove</button></div></article>)}</div>}
+                        {user && (cart?.items || []).length > 0 && (
+                            <div className="stack-list">
+                                {cart.items.map((item) => (
+                                    <article key={item.id} className="list-item">
+                                        <div className="list-item__row">
+                                            <div>
+                                                <strong>{item.product?.name}</strong>
+                                                <p className="muted">{currency(item.product?.price)} each</p>
+                                            </div>
+                                            <strong>{currency(item.subtotal)}</strong>
+                                        </div>
+                                        <div className="product-actions">
+                                            <input
+                                                className="qty-input"
+                                                min="1"
+                                                type="number"
+                                                aria-label={`Cart quantity for ${item.product?.name || "item"}`}
+                                                value={cartQty[item.id] || item.quantity}
+                                                onChange={(e) => setCartQty((prev) => ({ ...prev, [item.id]: Math.max(1, Number(e.target.value) || 1) }))}
+                                            />
+                                            <button
+                                                className="button button--ghost"
+                                                onClick={() => callWithFlash(
+                                                    api(`/api/cart/update/${item.id}`, {
+                                                        method: "PUT",
+                                                        body: JSON.stringify({
+                                                            productId: Number(item.product?.id),
+                                                            quantity: Number(cartQty[item.id] || 1)
+                                                        })
+                                                    }).then(setCart),
+                                                    "Cart updated."
+                                                )}
+                                            >
+                                                Update
+                                            </button>
+                                            <button
+                                                className="button button--ghost"
+                                                onClick={() => callWithFlash(api(`/api/cart/remove/${item.id}`, { method: "DELETE" }).then(setCart), "Item removed.")}
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+                        )}
                         <div className="cart-footer">
                             <div><p className="label">Total</p><strong>{currency(cartTotal)}</strong>{promotion && <p className="muted">Promo preview: -{currency(promoDiscount)} ({promotion.label})</p>}{promotion && <p className="label">Payable Preview: {currency(payableTotal)}</p>}</div>
                             <button className="button button--accent" onClick={() => callWithFlash(api("/api/orders/place", { method: "POST" }).then(refreshPrivateData).then(() => setPromoCode("")), "Order placed successfully.")}>Place order</button>
                         </div>
-                        <div className="toolbar"><input type="text" placeholder="Coupon code (PIZZA10, DRINK5, BREAD7, FESTIVE15)" value={promoCode} onChange={(e) => setPromoCode(e.target.value)} /></div>
+                        <div className="toolbar">
+                            <input
+                                type="text"
+                                aria-label="Coupon code"
+                                placeholder="Coupon code (PIZZA10, DRINK5, BREAD7, FESTIVE15)"
+                                value={promoCode}
+                                onChange={(e) => setPromoCode(e.target.value)}
+                            />
+                        </div>
                     </div>
 
                     <div className="card orders-card">
@@ -366,7 +433,36 @@ function App() {
                     </div>
                     <div className="card">
                         <div className="panel__heading"><div><p className="eyebrow">Secure & Efficient Operations</p><h3>Admin order status updates</h3></div><button className="button button--ghost" onClick={() => callWithFlash(loadAdminOrders(), "Admin orders refreshed.")}>Refresh</button></div>
-                        <div className="stack-list">{!adminOrders.length && <div className="empty-state">No orders available.</div>}{adminOrders.map((order) => <article key={order.id} className="list-item"><div className="list-item__row"><strong>Order #{order.id}</strong><span className="status-badge">{order.status}</span></div><p className="muted">{order.items?.length || 0} items • {currency(order.totalAmount)}</p><div className="product-actions"><select value={adminStatusDraft[order.id] || order.status} onChange={(e) => setAdminStatusDraft((prev) => ({ ...prev, [order.id]: e.target.value }))}>{ORDER_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}</select><button className="button" onClick={() => callWithFlash(api(`/api/admin/orders/${order.id}/status?status=${encodeURIComponent(adminStatusDraft[order.id] || "PENDING")}`, { method: "PUT" }).then(loadAdminOrders), `Order #${order.id} status updated.`)}>Update status</button></div></article>)}</div>
+                        <div className="stack-list">
+                            {!adminOrders.length && <div className="empty-state">No orders available.</div>}
+                            {adminOrders.map((order) => (
+                                <article key={order.id} className="list-item">
+                                    <div className="list-item__row">
+                                        <strong>Order #{order.id}</strong>
+                                        <span className="status-badge">{order.status}</span>
+                                    </div>
+                                    <p className="muted">{order.items?.length || 0} items • {currency(order.totalAmount)}</p>
+                                    <div className="product-actions">
+                                        <select
+                                            value={adminStatusDraft[order.id] || order.status}
+                                            onChange={(e) => setAdminStatusDraft((prev) => ({ ...prev, [order.id]: e.target.value }))}
+                                        >
+                                            {ORDER_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
+                                        </select>
+                                        <button
+                                            className="button"
+                                            onClick={() => callWithFlash(
+                                                api(`/api/admin/orders/${order.id}/status?status=${encodeURIComponent(adminStatusDraft[order.id] || "PENDING")}`, { method: "PUT" })
+                                                    .then(loadAdminOrders),
+                                                `Order #${order.id} status updated.`
+                                            )}
+                                        >
+                                            Update status
+                                        </button>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
                     </div>
                 </section>}
             </main>
