@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retail Ordering Console</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="page-shell">
+    <header class="hero">
+        <div class="hero__copy">
+            <p class="eyebrow">Retail Ordering Platform</p>
+            <h1>Storefront, cart, orders, and admin tools in one frontend.</h1>
+            <p class="hero__text">
+                Browse products, sign in, manage your cart, place orders, and handle inventory from the same screen.
+            </p>
+            <div class="hero__stats">
+                <article>
+                    <span id="product-count">0</span>
+                    <p>Products</p>
+                </article>
+                <article>
+                    <span id="category-count">0</span>
+                    <p>Categories</p>
+                </article>
+                <article>
+                    <span id="session-role">Guest</span>
+                    <p>Current Role</p>
+                </article>
+            </div>
+        </div>
+        <div class="hero__panel glass">
+            <div class="session-bar">
+                <div>
+                    <p class="label">Signed In As</p>
+                    <strong id="session-user">Guest session</strong>
+                    <p id="session-email" class="muted">Browse products without logging in.</p>
+                </div>
+                <button id="logout-btn" class="button button--ghost" hidden>Logout</button>
+            </div>
+            <div id="flash-message" class="flash" hidden></div>
+        </div>
+    </header>
+
+    <main class="dashboard">
+        <section class="panel panel--auth">
+            <div class="panel__heading">
+                <div>
+                    <p class="eyebrow">Access</p>
+                    <h2>Login or create an account</h2>
+                </div>
+            </div>
+            <div class="auth-grid">
+                <form id="login-form" class="card form-card">
+                    <h3>Login</h3>
+                    <label>
+                        <span>Email</span>
+                        <input type="email" name="email" placeholder="name@example.com" required>
+                    </label>
+                    <label>
+                        <span>Password</span>
+                        <input type="password" name="password" placeholder="Enter password" required>
+                    </label>
+                    <button type="submit" class="button">Login</button>
+                </form>
+
+                <form id="register-form" class="card form-card">
+                    <h3>Register</h3>
+                    <label>
+                        <span>Name</span>
+                        <input type="text" name="name" placeholder="Full name" required>
+                    </label>
+                    <label>
+                        <span>Email</span>
+                        <input type="email" name="email" placeholder="name@example.com" required>
+                    </label>
+                    <label>
+                        <span>Password</span>
+                        <input type="password" name="password" minlength="6" placeholder="At least 6 characters" required>
+                    </label>
+                    <label>
+                        <span>Phone</span>
+                        <input type="text" name="phone" placeholder="Optional phone number">
+                    </label>
+                    <label>
+                        <span>Address</span>
+                        <textarea name="address" rows="3" placeholder="Optional delivery address"></textarea>
+                    </label>
+                    <button type="submit" class="button button--accent">Create account</button>
+                </form>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel__heading">
+                <div>
+                    <p class="eyebrow">Catalog</p>
+                    <h2>Browse products</h2>
+                </div>
+                <div class="toolbar">
+                    <input id="search-input" type="search" placeholder="Search products">
+                    <select id="category-filter">
+                        <option value="">All categories</option>
+                    </select>
+                    <button id="refresh-products" class="button button--ghost" type="button">Refresh</button>
+                </div>
+            </div>
+            <div id="category-pills" class="pill-row"></div>
+            <div id="product-grid" class="product-grid"></div>
+        </section>
+
+        <section class="panel panel--split">
+            <div class="card cart-card">
+                <div class="panel__heading">
+                    <div>
+                        <p class="eyebrow">Cart</p>
+                        <h2>Your basket</h2>
+                    </div>
+                    <button id="clear-cart-btn" class="button button--ghost" type="button">Clear cart</button>
+                </div>
+                <div id="cart-items" class="stack-list empty-state">
+                    Login to manage your cart.
+                </div>
+                <div class="cart-footer">
+                    <div>
+                        <p class="label">Total</p>
+                        <strong id="cart-total">Rs 0.00</strong>
+                    </div>
+                    <button id="place-order-btn" class="button button--accent" type="button">Place order</button>
+                </div>
+            </div>
+
+            <div class="card orders-card">
+                <div class="panel__heading">
+                    <div>
+                        <p class="eyebrow">Orders</p>
+                        <h2>Recent orders</h2>
+                    </div>
+                    <button id="refresh-orders" class="button button--ghost" type="button">Refresh</button>
+                </div>
+                <div id="orders-list" class="stack-list empty-state">
+                    Login to see your orders.
+                </div>
+            </div>
+        </section>
+
+        <section id="admin-panel" class="panel admin-panel" hidden>
+            <div class="panel__heading">
+                <div>
+                    <p class="eyebrow">Admin</p>
+                    <h2>Manage catalog and inventory</h2>
+                </div>
+            </div>
+
+            <div class="admin-grid">
+                <form id="category-form" class="card form-card">
+                    <h3>Create category</h3>
+                    <label>
+                        <span>Name</span>
+                        <input type="text" name="name" required>
+                    </label>
+                    <label>
+                        <span>Brand</span>
+                        <input type="text" name="brand">
+                    </label>
+                    <label>
+                        <span>Packaging Type</span>
+                        <input type="text" name="packagingType">
+                    </label>
+                    <button type="submit" class="button">Save category</button>
+                </form>
+
+                <form id="product-form" class="card form-card">
+                    <h3>Create product</h3>
+                    <label>
+                        <span>Name</span>
+                        <input type="text" name="name" required>
+                    </label>
+                    <label>
+                        <span>Description</span>
+                        <textarea name="description" rows="3"></textarea>
+                    </label>
+                    <label>
+                        <span>Price</span>
+                        <input type="number" name="price" min="0.1" step="0.01" required>
+                    </label>
+                    <label>
+                        <span>Category</span>
+                        <select name="categoryId" id="admin-category-select" required></select>
+                    </label>
+                    <label>
+                        <span>Image URL</span>
+                        <input type="url" name="imageUrl" placeholder="https://...">
+                    </label>
+                    <label>
+                        <span>Stock Quantity</span>
+                        <input type="number" name="stockQuantity" min="0" step="1" required>
+                    </label>
+                    <button type="submit" class="button button--accent">Save product</button>
+                </form>
+
+                <form id="inventory-form" class="card form-card">
+                    <h3>Update stock</h3>
+                    <label>
+                        <span>Product</span>
+                        <select name="productId" id="inventory-product-select" required></select>
+                    </label>
+                    <label>
+                        <span>Available Stock</span>
+                        <input type="number" name="availableStock" min="0" step="1" required>
+                    </label>
+                    <button type="submit" class="button">Update inventory</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="panel__heading">
+                    <div>
+                        <p class="eyebrow">Inventory Snapshot</p>
+                        <h3>Current stock</h3>
+                    </div>
+                    <button id="refresh-inventory" class="button button--ghost" type="button">Refresh</button>
+                </div>
+                <div id="inventory-list" class="stack-list empty-state">
+                    Inventory data will appear here.
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
