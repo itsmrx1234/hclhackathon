@@ -155,7 +155,7 @@ function App() {
     }, { Pizza: 0, "Cold Drinks": 0, Breads: 0, Other: 0 }), [products]);
 
     const loyaltyPoints = Math.floor(orders.reduce((sum, order) => sum + Number(order.totalAmount || 0), 0) / 100);
-    const promotion = PROMOTIONS[promoCode.trim().toUpperCase()];
+    const promotion = useMemo(() => PROMOTIONS[promoCode.trim().toUpperCase()], [promoCode]);
     const cartTotal = Number(cart?.totalAmount || 0);
     const promoDiscount = promotion ? cartTotal * promotion.discountRate : 0;
     const payableTotal = Math.max(cartTotal - promoDiscount, 0);
@@ -367,10 +367,12 @@ function App() {
                             <input
                                 type="text"
                                 aria-label="Coupon code"
+                                aria-describedby="coupon-help"
                                 placeholder="Coupon code (PIZZA10, DRINK5, BREAD7, FESTIVE15)"
                                 value={promoCode}
                                 onChange={(e) => setPromoCode(e.target.value)}
                             />
+                            <p id="coupon-help" className="muted">Available coupons: PIZZA10, DRINK5, BREAD7, FESTIVE15</p>
                         </div>
                     </div>
 
