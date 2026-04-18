@@ -140,7 +140,7 @@ function App() {
                 showFlash(error.message, "error");
             }
         })();
-    }, [user]);
+    }, [user, token]);
 
     const filteredProducts = useMemo(() => products.filter((product) => {
         const byCategory = !categoryId || String(product.category?.id || "") === String(categoryId);
@@ -223,7 +223,7 @@ function App() {
 
             <main className="dashboard">
                 <section className="panel panel--auth">
-                    <div className="panel__heading"><div><p className="eyebrow">Customer Enablement</p><h2>Login or create account</h2></div></div>
+                    <div className="panel__heading"><div><p className="eyebrow">Account Access</p><h2>Login or create account</h2></div></div>
                     <div className="auth-grid">
                         <form className="card form-card" onSubmit={(event) => callWithFlash((async () => {
                             event.preventDefault();
@@ -360,7 +360,13 @@ function App() {
                             </div>
                         )}
                         <div className="cart-footer">
-                            <div><p className="label">Total</p><strong>{currency(cartTotal)}</strong>{promotion && <p className="muted">Promo preview: -{currency(promoDiscount)} ({promotion.label})</p>}{promotion && <p className="label">Payable Preview: {currency(payableTotal)}</p>}</div>
+                            <div>
+                                <p className="label">Total</p>
+                                <strong>{currency(cartTotal)}</strong>
+                                {promotion && <p className="muted">Savings preview: -{currency(promoDiscount)} ({promotion.label})</p>}
+                                {promotion && <p className="label">Estimated total preview: {currency(payableTotal)}</p>}
+                                {promotion && <p className="muted">Note: coupon preview is UI-only until backend coupon support is added.</p>}
+                            </div>
                             <button className="button button--accent" onClick={() => callWithFlash(api("/api/orders/place", { method: "POST" }).then(refreshPrivateData).then(() => setPromoCode("")), "Order placed successfully.")}>Place order</button>
                         </div>
                         <div className="toolbar">
@@ -368,7 +374,7 @@ function App() {
                                 type="text"
                                 aria-label="Coupon code"
                                 aria-describedby="coupon-help"
-                                placeholder="Coupon code (PIZZA10, DRINK5, BREAD7, FESTIVE15)"
+                                placeholder="Enter coupon code"
                                 value={promoCode}
                                 onChange={(e) => setPromoCode(e.target.value)}
                             />
